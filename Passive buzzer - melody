@@ -1,11 +1,12 @@
 import RPi.GPIO as GPIO
 import time
 
-buzzer_pin = 27
+buzzer_pin = 7  # Physical pin number (BOARD mode)
+
 
 notes = {
-	'B0' : 31,
-	'C1' : 33, 'CS1' : 35,
+    'B0' : 31,
+    'C1' : 33, 'CS1' : 35,
 	'D1' : 37, 'DS1' : 39,
 	'EB1' : 39,
 	'E1' : 41,
@@ -94,31 +95,29 @@ twinkle_twinkle_tempo = [
 	4,4,4,4,4,4,2,
 ]
 
-def buzz(frequency, length):	 #create the function "buzz" and feed it the pitch and duration)
-
-	if(frequency==0):
-		time.sleep(length)
-		return
-	period = 1.0 / frequency 		 #in physics, the period (sec/cyc) is the inverse of the frequency (cyc/sec)
-	delayValue = period / 2		 #calcuate the time for half of the wave
-	numCycles = int(length * frequency)	 #the number of waves to produce is the duration times the frequency
-	
-	for i in range(numCycles):		#start a loop from 0 to the variable "cycles" calculated above
-		GPIO.output(buzzer_pin, True)	 #set pin 27 to high
-		time.sleep(delayValue)		#wait with pin 27 high
-		GPIO.output(buzzer_pin, False)		#set pin 27 to low
-		time.sleep(delayValue)		#wait with pin 27 low
-	
 
 
 def setup():
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(buzzer_pin, GPIO.IN)
-	GPIO.setup(buzzer_pin, GPIO.OUT)
-	
+    GPIO.setmode(GPIO.BOARD)      # Use physical pin numbers
+    GPIO.setup(buzzer_pin, GPIO.OUT)
+
+def buzz(frequency, duration):
+    if frequency ==0:
+        time.sleep(duration)
+        return
+    period = 1.0/frequency
+    delay = period / 2
+    cycles = int(frequency * duration)
+    
+    for i in range(cycles):
+        GPIO.output(buzzer_pin, True)
+        time.sleep(delay)
+        GPIO.output(buzzer_pin, False)
+        time.sleep(delay)
+
 def destroy():
-	GPIO.cleanup()				# Release resource
-	
+    GPIO.output(buzzer_pin, False)
+    GPIO.cleanup()
 
 def play(melody,tempo,pause,pace=0.800):
 	
@@ -129,4 +128,18 @@ def play(melody,tempo,pause,pace=0.800):
 		
 		pauseBetweenNotes = noteDuration * pause
 		time.sleep(pauseBetweenNotes)
-	
+
+if __name__ == '__main__':
+    try:
+        setup()
+        print("Playing 440 Hz tone for 1 second...")
+        buzz(440, 1)  # A4 note
+        time.sleep(1)
+        print("Twinkle Twinkle little star melody")
+        play(twinkle_twinkle_melody, twinkle_twinkle_tempo, 0.50, 1.000)
+        time.sleep(1)
+        print("Done.")
+    except KeyboardInterrupt:
+        pass
+    finally:
+        destroy()
